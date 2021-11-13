@@ -5,8 +5,11 @@ import androidx.lifecycle.Observer;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -26,12 +29,13 @@ public class RegisterActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
+        changeStatusBarColor();
 
         name = findViewById(R.id.editTextName);
         password = findViewById(R.id.editTextPassword);
         email = findViewById(R.id.editTextEmail);
-        buttonLogin = findViewById(R.id.buttonRegisterLogin);
-        buttonRegister = findViewById(R.id.buttonRegisterLogin);
+        //buttonLogin = findViewById(R.id.buttonRegisterLogin);
+        buttonRegister = findViewById(R.id.cirRegisterButton);
         sharedPreferences = getSharedPreferences("UsersInfo", MODE_PRIVATE);
         editor = sharedPreferences.edit();
     }
@@ -39,6 +43,7 @@ public class RegisterActivity extends AppCompatActivity {
     public void buttonLoginClick(View view){
         Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
         startActivity(intent);
+        overridePendingTransition(R.anim.slide_in_left,android.R.anim.slide_out_right);
     }
 
     public void buttonRegisterClick(View view){
@@ -81,5 +86,14 @@ public class RegisterActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    private void changeStatusBarColor() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Window window = getWindow();
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+//            window.setStatusBarColor(Color.TRANSPARENT);
+            window.setStatusBarColor(getResources().getColor(R.color.register_bk_color));
+        }
     }
 }

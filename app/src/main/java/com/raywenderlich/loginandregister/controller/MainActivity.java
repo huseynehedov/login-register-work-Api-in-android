@@ -5,6 +5,7 @@ import androidx.lifecycle.Observer;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -19,7 +20,7 @@ import com.raywenderlich.loginandregister.repo.NetworkRepo;
 import com.raywenderlich.loginandregister.retro.ApiUtils;
 
 public class MainActivity extends AppCompatActivity {
-    private EditText username, password;
+    private EditText userEmail, password;
     private Button buttonLogin, buttonRegister;
     private UsersDaoInterface usersDaoInterface;
     private SharedPreferences sharedPreferences;
@@ -29,12 +30,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if(Build.VERSION.SDK_INT>= Build.VERSION_CODES.M){
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        }
         setContentView(R.layout.activity_main);
 
-        username = findViewById(R.id.editTextName);
+        userEmail = findViewById(R.id.editTextEmail);
         password = findViewById(R.id.editTextPassword);
-        buttonLogin = findViewById(R.id.buttonRegisterLogin);
-        buttonRegister = findViewById(R.id.buttonRegisterLogin);
+        buttonLogin = findViewById(R.id.cirLoginButton);
+       // buttonRegister = findViewById(R.id.buttonRegisterLogin);
 
         sharedPreferences = getSharedPreferences("UsersInfo", MODE_PRIVATE);
         editor = sharedPreferences.edit();
@@ -50,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void buttonLoginClick(View view){
-        String checkUsername = username.getText().toString();
+        String checkUsername = userEmail.getText().toString();
         String checkPassword = password.getText().toString();
         LoginRequest request = new LoginRequest(checkUsername, checkPassword);
         NetworkRepo.getInstance().login(request).observe(this, new Observer<LoginResponse>() {
@@ -88,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
     public void buttonRegisterClick(View view){
         Intent intent = new Intent(MainActivity.this, RegisterActivity.class);
         startActivity(intent);
+        overridePendingTransition(R.anim.slide_in_right, R.anim.stay);
     }
 
 }

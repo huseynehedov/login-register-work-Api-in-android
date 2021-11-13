@@ -4,12 +4,13 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="..\:/AndroidExamples/JavaExamples/LoginAndRegister/app/src/main/res/drawable/button_background_blue.xml" value="0.2203125" />
+        <entry key="..\:/AndroidExamples/JavaExamples/LoginAndRegister/app/src/main/res/drawable/ic_register_hero.xml" value="0.2203125" />
         <entry key="..\:/AndroidExamples/JavaExamples/LoginAndRegister/app/src/main/res/layout/activity_home.xml" value="0.25" />
         <entry key="..\:/AndroidExamples/JavaExamples/LoginAndRegister/app/src/main/res/layout/activity_login_home.xml" value="0.20416666666666666" />
         <entry key="..\:/AndroidExamples/JavaExamples/LoginAndRegister/app/src/main/res/layout/activity_login_success.xml" value="0.20416666666666666" />
         <entry key="..\:/AndroidExamples/JavaExamples/LoginAndRegister/app/src/main/res/layout/activity_main.xml" value="0.25" />
         <entry key="..\:/AndroidExamples/JavaExamples/LoginAndRegister/app/src/main/res/layout/activity_maps.xml" value="0.25" />
-        <entry key="..\:/AndroidExamples/JavaExamples/LoginAndRegister/app/src/main/res/layout/activity_register.xml" value="0.22" />
+        <entry key="..\:/AndroidExamples/JavaExamples/LoginAndRegister/app/src/main/res/layout/activity_register.xml" value="0.25" />
         <entry key="..\:/AndroidExamples/JavaExamples/LoginAndRegister/app/src/main/res/menu/login_toolbar_menu.xml" value="0.25" />
       </map>
     </option>

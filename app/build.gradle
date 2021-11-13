@@ -49,4 +49,6 @@ dependencies {
 
     //Location
     implementation 'com.google.android.gms:play-services-location:18.0.0'
+
+    implementation 'br.com.simplepass:loading-button-android:1.14.0'
 }
