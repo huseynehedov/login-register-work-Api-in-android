@@ -22,6 +22,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.ApiException;
@@ -55,6 +57,7 @@ public class HomeActivity extends AppCompatActivity {
     private double latitude;
     private double longitude;
     private String userToken;
+    private WebView webViewSoft;
 
 
     @Override
@@ -62,11 +65,16 @@ public class HomeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
+        webViewSoft = (WebView) findViewById(R.id.webViewSoft);
         toolbar = findViewById(R.id.toolbar);
         toolbar.setTitle("Home");
         setSupportActionBar(toolbar);
         sharedPreferences = getSharedPreferences("UsersInfo", MODE_PRIVATE);
         editor = sharedPreferences.edit();
+
+        webViewSoft.setWebViewClient(new WebViewClient());
+        webViewSoft.getSettings().setJavaScriptEnabled(true);
+        webViewSoft.loadUrl("https://softsolution.az/");
 
         userToken = sharedPreferences.getString("user", null);
 
@@ -75,6 +83,15 @@ public class HomeActivity extends AppCompatActivity {
         locationRequest.setInterval(5000);
         locationRequest.setFastestInterval(2000);
 
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(webViewSoft.canGoBack()){
+            webViewSoft.goBack();
+        }else{
+            super.onBackPressed();
+        }
     }
 
     public void buttonExitClick(View view){
