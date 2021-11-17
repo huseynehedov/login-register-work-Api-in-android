@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.Observer;
 
 import android.Manifest;
@@ -14,6 +15,9 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -28,6 +32,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
@@ -35,29 +40,30 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.net.PlacesClient;
 import com.raywenderlich.loginandregister.MapsActivity;
 import com.raywenderlich.loginandregister.R;
-import com.raywenderlich.loginandregister.model.MyPlacesResponse;
 import com.raywenderlich.loginandregister.model.PlaceResponse;
 import com.raywenderlich.loginandregister.model.PlaceRequest;
 import com.raywenderlich.loginandregister.repo.NetworkRepo;
 
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
 public class HomeActivity extends AppCompatActivity {
     private Toolbar toolbar;
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
-    private LocationRequest locationRequest;
-    String getMyLatitude;
-    String getMyLongitude ;
-    private double latitude;
-    private double longitude;
     private String userToken;
     private WebView webViewSoft;
+    private LocationRequest locationRequest;
 
 
     @Override
@@ -80,53 +86,25 @@ public class HomeActivity extends AppCompatActivity {
 
         locationRequest = LocationRequest.create();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        locationRequest.setInterval(5000);
+        locationRequest.setInterval(4000);
         locationRequest.setFastestInterval(2000);
 
     }
 
     @Override
     public void onBackPressed() {
-        if(webViewSoft.canGoBack()){
+        if (webViewSoft.canGoBack()) {
             webViewSoft.goBack();
-        }else{
+        } else {
             super.onBackPressed();
         }
     }
 
-    public void buttonExitClick(View view){
+    public void buttonExitClick(View view) {
         editor.remove("user");
         editor.commit();
         startActivity(new Intent(HomeActivity.this, MainActivity.class));
         finish();
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 1) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                if (isGpsEnabled()) {
-
-                    getCurrentLocation();
-
-                } else {
-
-                    turnOnGps();
-                }
-            }
-        }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 2) {
-            if (resultCode == Activity.RESULT_OK) {
-
-                getCurrentLocation();
-            }
-        }
     }
 
     @Override
@@ -139,62 +117,47 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.action_userLocations) {
-
-            NetworkRepo.getInstance().getUserLocation("Bearer "+userToken).observe(this, new Observer<MyPlacesResponse>() {
-                @Override
-                public void onChanged(MyPlacesResponse myPlacesResponse) {
-                    System.out.println(myPlacesResponse);
-                    System.out.println(myPlacesResponse.getMessage());
-
-                    if(myPlacesResponse.getMessage() == null){
-                        Intent intent = new Intent(HomeActivity.this, MapsActivity.class);
-                        intent.putExtra("size",myPlacesResponse.getSuccess().getLocations().size());
-                        System.out.println("Size is " + myPlacesResponse.getSuccess().getLocations().size());
-                        for(int i=0; i< myPlacesResponse.getSuccess().getLocations().size(); i++){
-                            Log.e("Location "+i, String.valueOf(myPlacesResponse.getSuccess().getLocations().get(i).getLatitude()));
-                            Log.e("Location "+i, String.valueOf(myPlacesResponse.getSuccess().getLocations().get(i).getLongitude()));
-                            Log.e("*****************", "*********************");
-                            PlaceRequest request = new PlaceRequest(myPlacesResponse.getSuccess().getLocations().get(i).getLatitude(),
-                                    myPlacesResponse.getSuccess().getLocations().get(i).getLongitude());
-                            intent.putExtra("userLocation"+i, request);
-                        }
-                        startActivity(intent);
-                    }else{
-                        Toast.makeText(HomeActivity.this, myPlacesResponse.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                }
-            });
+            Intent intent = new Intent(HomeActivity.this, MapsActivity.class);
+            intent.putExtra("token", userToken);
+            startActivity(intent);
 
         } else if (item.getItemId() == R.id.action_add_location) {
             getCurrentLocation();
-            PlaceRequest request = new PlaceRequest(latitude, longitude);
-            NetworkRepo.getInstance().addLocation("Bearer "+userToken, request).observe(this, new Observer<PlaceResponse>() {
-                @Override
-                public void onChanged(PlaceResponse placeResponse) {
-                    System.out.println(placeResponse);
-                    System.out.println(placeResponse.getError());
-                    if(placeResponse.getError() == null){
-                        Toast.makeText(HomeActivity.this, "Added Location", Toast.LENGTH_SHORT).show();
-                        System.out.println(placeResponse.getSuccess().getMessage());
-                    }else{
-                        StringBuilder sb = new StringBuilder();
-
-                        if(placeResponse.getError().getLatitude() != null){
-                            for(String s: placeResponse.getError().getLatitude()){
-                                sb.append(s + '\n');
-                            }
-                        }
-                        if(placeResponse.getError().getLongitude() != null){
-                            for(String s: placeResponse.getError().getLongitude()){
-                                sb.append(s + '\n');
-                            }
-                        }
-                        Toast.makeText(HomeActivity.this, sb.toString(), Toast.LENGTH_SHORT).show();
-                    }
-                }
-            });
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == 1){
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED){
+
+                if (isGPSEnabled()) {
+
+                    getCurrentLocation();
+
+                }else {
+
+                    turnOnGPS();
+                }
+            }
+        }
+
+
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == 2) {
+            if (resultCode == Activity.RESULT_OK) {
+
+                getCurrentLocation();
+            }
+        }
     }
 
     private void getCurrentLocation() {
@@ -202,7 +165,7 @@ public class HomeActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (ActivityCompat.checkSelfPermission(HomeActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 
-                if (isGpsEnabled()) {
+                if (isGPSEnabled()) {
 
                     LocationServices.getFusedLocationProviderClient(HomeActivity.this)
                             .requestLocationUpdates(locationRequest, new LocationCallback() {
@@ -216,16 +179,41 @@ public class HomeActivity extends AppCompatActivity {
                                     if (locationResult != null && locationResult.getLocations().size() >0){
 
                                         int index = locationResult.getLocations().size() - 1;
-                                        latitude = locationResult.getLocations().get(index).getLatitude();
-                                        longitude = locationResult.getLocations().get(index).getLongitude();
-                                        getMyLatitude = String.valueOf(latitude);
-                                        getMyLongitude = String.valueOf(longitude);
+                                        double latitude = locationResult.getLocations().get(index).getLatitude();
+                                        double longitude = locationResult.getLocations().get(index).getLongitude();
+
+                                        PlaceRequest request = new PlaceRequest(latitude, longitude);
+                                        NetworkRepo.getInstance().addLocation("Bearer "+userToken, request).observe(HomeActivity.this, new Observer<PlaceResponse>() {
+                                            @Override
+                                            public void onChanged(PlaceResponse placeResponse) {
+                                                System.out.println(placeResponse);
+                                                System.out.println(placeResponse.getError());
+                                                if(placeResponse.getError() == null){
+                                                    Toast.makeText(HomeActivity.this, "Added Location", Toast.LENGTH_SHORT).show();
+                                                    System.out.println(placeResponse.getSuccess().getMessage());
+                                                }else{
+                                                    StringBuilder sb = new StringBuilder();
+
+                                                    if(placeResponse.getError().getLatitude() != null){
+                                                        for(String s: placeResponse.getError().getLatitude()){
+                                                            sb.append(s + '\n');
+                                                        }
+                                                    }
+                                                    if(placeResponse.getError().getLongitude() != null){
+                                                        for(String s: placeResponse.getError().getLongitude()){
+                                                            sb.append(s + '\n');
+                                                        }
+                                                    }
+                                                    Toast.makeText(HomeActivity.this, sb.toString(), Toast.LENGTH_SHORT).show();
+                                                }
+                                            }
+                                        });
                                     }
                                 }
                             }, Looper.getMainLooper());
 
                 } else {
-                    turnOnGps();
+                    turnOnGPS();
                 }
 
             } else {
@@ -234,7 +222,7 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    private void turnOnGps() {
+    private void turnOnGPS() {
 
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                 .addLocationRequest(locationRequest);
@@ -274,16 +262,16 @@ public class HomeActivity extends AppCompatActivity {
 
     }
 
-    private boolean isGpsEnabled() {
+    private boolean isGPSEnabled() {
         LocationManager locationManager = null;
         boolean isEnabled = false;
+
         if (locationManager == null) {
             locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         }
 
         isEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-
         return isEnabled;
-    }
 
+    }
 }

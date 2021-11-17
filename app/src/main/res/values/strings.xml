@@ -3,4 +3,5 @@
     <string name="title_activity_maps">MapsActivity</string>
     <string name="login_email_hint">Email</string>
     <string name="login_password_hint">Password</string>
+    <string name="maps_api_key">AIzaSyAWEJjgi3yBcBdh0OmphSm2MvjD1sjEer0</string>
 </resources>
